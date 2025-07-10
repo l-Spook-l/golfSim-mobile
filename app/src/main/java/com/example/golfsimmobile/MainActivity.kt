@@ -6,8 +6,8 @@ import android.widget.Button
 
 class MainActivity : AppCompatActivity() {
     // Объявляем кнопки
-    private lateinit var btnGameTab: Button
-    private lateinit var btnFindBallTab: Button
+    private lateinit var gameTabButton: Button
+    private lateinit var findBallTabButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -16,25 +16,25 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.main_menu)
 
         // Получаем ссылки на кнопки по ID
-        btnGameTab = findViewById(R.id.btnGameTab)
-        btnFindBallTab = findViewById(R.id.btnFindBallTab)
+        gameTabButton = findViewById(R.id.btnGame)
+        findBallTabButton = findViewById(R.id.btnFindBall)
 
         // При первом запуске сразу загружаем GameFragment в контейнер
         supportFragmentManager.beginTransaction()
-            .replace(R.id.container, GameFragment())
+            .replace(R.id.fragment_container, GameFragment())
             .commit()
 
         // Обработчик нажатия на кнопку "Game"
-        btnGameTab.setOnClickListener {
+        gameTabButton.setOnClickListener {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.container, GameFragment())
+                .replace(R.id.fragment_container, GameFragment())
                 .commit()
         }
 
         // Обработчик нажатия на кнопку "Find Ball"
-        btnFindBallTab.setOnClickListener {
+        findBallTabButton.setOnClickListener {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.container, FindBallFragment())
+                .replace(R.id.fragment_container, FindBallFragment())
                 .commit()
         }
     }

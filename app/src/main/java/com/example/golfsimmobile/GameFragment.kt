@@ -69,6 +69,17 @@ class GameFragment : Fragment() {
 
         getPermissions()
 
+        textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+            override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
+            }
+
+            override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture, p1: Int, p2: Int) {}
+            override fun onSurfaceTextureDestroyed(p0: SurfaceTexture): Boolean = true  // у меня false
+            override fun onSurfaceTextureUpdated(p0: SurfaceTexture) {
+                // OpenCV логика обработки кадра — вставляется сюда
+            }
+        }
+
         trackButton.setOnClickListener {
             isTracking = !isTracking
             if (isTracking) {

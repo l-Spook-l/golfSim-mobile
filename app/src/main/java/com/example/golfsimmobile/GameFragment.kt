@@ -111,4 +111,39 @@ class GameFragment : Fragment() {
             )
         }
     }
+
+    @SuppressLint("MissingPermission")
+    fun openCamera() {
+        cameraManager.openCamera(cameraManager.cameraIdList[0], object : CameraDevice.StateCallback() {
+            override fun onOpened(p0: CameraDevice) {
+                cameraDevice = p0
+
+                var surfaceTexture = textureView.surfaceTexture
+                var surface = Surface(surfaceTexture)
+
+                if (surfaceTexture == null) {
+                    return
+                }
+                surfaceTexture.setDefaultBufferSize(previewSize.width, previewSize.height)
+
+                var captureRequest = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                captureRequest.addTarget(surface)
+
+                cameraDevice.createCaptureSession(listOf(surface), object : CameraCaptureSession.StateCallback() {
+                    override fun onConfigured(p0: CameraCaptureSession) {
+                        p0.setRepeatingRequest(captureRequest.build(), null, null)
+                    }
+
+                    override fun onConfigureFailed(p0: CameraCaptureSession) {
+                    }
+                }, handler)
+            }
+
+            override fun onDisconnected(p0: CameraDevice) {
+            }
+
+            override fun onError(p0: CameraDevice, p1: Int) {
+            }
+        }, handler)
+    }
 }

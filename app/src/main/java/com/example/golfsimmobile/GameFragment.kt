@@ -83,16 +83,7 @@ class GameFragment : Fragment() {
 
 //        getPermissions()
 
-        textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-            override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
-            }
-
-            override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture, p1: Int, p2: Int) {}
-            override fun onSurfaceTextureDestroyed(p0: SurfaceTexture): Boolean = true  // у меня false
-            override fun onSurfaceTextureUpdated(p0: SurfaceTexture) {
-                // OpenCV логика обработки кадра — вставляется сюда
-            }
-        }
+        textureView.surfaceTextureListener = surfaceTextureListener
 
         trackButton.setOnClickListener {
             isTracking = !isTracking
@@ -109,6 +100,20 @@ class GameFragment : Fragment() {
             }
         }
         checkAndRequestPermissions()
+    }
+
+    private val surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+        override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+            openCamera()
+        }
+
+        override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
+
+        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean = true  // у меня false
+
+        override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
+            // OpenCV логика обработки кадра — вставляется сюда
+        }
     }
 
     private fun checkAndRequestPermissions() {

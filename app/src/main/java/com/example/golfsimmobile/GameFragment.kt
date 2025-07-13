@@ -81,7 +81,7 @@ class GameFragment : Fragment() {
             }
         }
 
-//        getPermissions()
+        cameraManager = requireContext().getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
         textureView.surfaceTextureListener = surfaceTextureListener
 

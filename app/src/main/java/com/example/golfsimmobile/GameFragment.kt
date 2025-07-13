@@ -1,6 +1,7 @@
 package com.example.golfsimmobile
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -15,6 +16,7 @@ import android.os.HandlerThread
 import android.util.Log
 import android.util.Size
 import android.view.LayoutInflater
+import android.view.Surface
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
@@ -34,6 +36,19 @@ class GameFragment : Fragment() {
     private lateinit var textureView: TextureView
     private lateinit var imageView: ImageView
     private lateinit var handler: Handler
+    private lateinit var cameraManager: CameraManager
+    private lateinit var cameraDevice: CameraDevice
+    private lateinit var captureRequestBuilder: CaptureRequest.Builder
+    private lateinit var captureSession: CameraCaptureSession
+    private lateinit var mediaRecorder: MediaRecorder
+    private var previewSize: Size = Size(1280, 720)
+
+    private var isRecording = false
+    private var ballDetected = false
+    private var ballDetectionStartTime = 0L
+    private var ballDetectionStopTime = 0L
+    private lateinit var bitmap: Bitmap
+    private lateinit var videoFilePath: String
 
     private var isTracking = false
 
@@ -58,15 +73,15 @@ class GameFragment : Fragment() {
         requestPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
-            val allPermissionsGranted = permissions.values.all { it }
-            if (allPermissionsGranted) {
-                Toast.makeText(requireContext(), "Все разрешения получены!", Toast.LENGTH_SHORT).show()
+            if (permissions.values.all { it }) {
+                showToast("Разрешения предоставлены")
+                openCamera()
             } else {
-                Toast.makeText(requireContext(), "Некоторые разрешения не были предоставлены.", Toast.LENGTH_SHORT).show()
+                showToast("Не все разрешения предоставлены")
             }
         }
 
-        getPermissions()
+//        getPermissions()
 
         textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
             override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
@@ -93,21 +108,26 @@ class GameFragment : Fragment() {
                 // TODO: Остановить отслеживание
             }
         }
+        checkAndRequestPermissions()
     }
 
-    private fun getPermissions() {
-        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                requireActivity(),
-                arrayOf(
-                    android.Manifest.permission.CAMERA,
-                    Manifest.permission.RECORD_AUDIO,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                ), 101
-            )
+    private fun checkAndRequestPermissions() {
+        val permissions = arrayOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
+
+        val notGranted = permissions.filter {
+            ContextCompat.checkSelfPermission(requireContext(), it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (notGranted.isNotEmpty()) {
+            requestPermissionLauncher.launch(permissions)
+        } else {
+            if (textureView.isAvailable) {
+                openCamera()
+            }
         }
     }
 

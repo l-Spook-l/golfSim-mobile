@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
@@ -186,6 +187,14 @@ class GameFragment : Fragment() {
             showToast("Ошибка открытия камеры: ${e.message}")
         }
     }
+
+    override fun onPause() {
+        super.onPause()
+        if (this::cameraDevice.isInitialized) {
+            cameraDevice.close()
+        }
+    }
+    
     private fun showToast(message: String) {
         activity?.runOnUiThread {
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()

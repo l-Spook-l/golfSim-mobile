@@ -47,6 +47,7 @@ class GameFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        textureView = view.findViewById(R.id.textureView)
         val trackButton = view.findViewById<Button>(R.id.recordButton)  // изменить назв кнопки
         imageView = view.findViewById(R.id.imageView)
         textureView = view.findViewById(R.id.textureView)

@@ -186,4 +186,9 @@ class GameFragment : Fragment() {
             showToast("Ошибка открытия камеры: ${e.message}")
         }
     }
+    private fun showToast(message: String) {
+        activity?.runOnUiThread {
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+        }
+    }
 }

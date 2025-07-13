@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.SurfaceTexture
+import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
@@ -143,7 +144,10 @@ class GameFragment : Fragment() {
 
         try {
             val cameraId = cameraManager.cameraIdList.first()
-            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
                 showToast("Нет разрешения на камеру")
                 return
             }
@@ -151,26 +155,7 @@ class GameFragment : Fragment() {
             cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
                 override fun onOpened(device: CameraDevice) {
                     cameraDevice = device
-                    val surfaceTexture = textureView.surfaceTexture ?: return
-                    surfaceTexture.setDefaultBufferSize(previewSize.width, previewSize.height)
-                    val previewSurface = Surface(surfaceTexture)
-
-                    captureRequestBuilder = device.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-                    captureRequestBuilder.addTarget(previewSurface)
-
-                    Log.d("Camera", "Camera opened successfully 1")
-
-                    cameraDevice.createCaptureSession(listOf(previewSurface), object : CameraCaptureSession.StateCallback() {
-                        override fun onConfigured(session: CameraCaptureSession) {
-                            captureSession = session
-                            captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, handler)
-                            Log.d("Camera", "Camera opened successfully 2")
-                        }
-
-                        override fun onConfigureFailed(session: CameraCaptureSession) {
-                            showToast("Не удалось настроить камеру")
-                        }
-                    }, handler)
+                    startPreview()
                 }
 
                 override fun onDisconnected(device: CameraDevice) {
@@ -182,12 +167,41 @@ class GameFragment : Fragment() {
                     showToast("Ошибка камеры: $error")
                 }
             }, handler)
+
         } catch (e: Exception) {
             e.printStackTrace()
             showToast("Ошибка открытия камеры: ${e.message}")
         }
     }
 
+    private fun startPreview() {
+        if (!::cameraDevice.isInitialized || !textureView.isAvailable) return
+
+        val surfaceTexture = textureView.surfaceTexture ?: return
+        surfaceTexture.setDefaultBufferSize(previewSize.width, previewSize.height)
+        val previewSurface = Surface(surfaceTexture)
+
+        try {
+            captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+            captureRequestBuilder.addTarget(previewSurface)
+
+            cameraDevice.createCaptureSession(listOf(previewSurface), object : CameraCaptureSession.StateCallback() {
+                override fun onConfigured(session: CameraCaptureSession) {
+                    captureSession = session
+                    captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, handler)
+                    Log.d("Camera", "Preview started")
+                }
+
+                override fun onConfigureFailed(session: CameraCaptureSession) {
+                    showToast("Не удалось настроить превью")
+                }
+            }, handler)
+        } catch (e: CameraAccessException) {
+            e.printStackTrace()
+            showToast("Ошибка запуска превью: ${e.message}")
+        }
+    }
+    
     override fun onPause() {
         super.onPause()
         if (this::cameraDevice.isInitialized) {

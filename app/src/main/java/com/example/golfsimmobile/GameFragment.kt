@@ -136,38 +136,54 @@ class GameFragment : Fragment() {
         }
     }
 
-    @SuppressLint("MissingPermission")
-    fun openCamera() {
-        cameraManager.openCamera(cameraManager.cameraIdList[0], object : CameraDevice.StateCallback() {
-            override fun onOpened(p0: CameraDevice) {
-                cameraDevice = p0
+    private fun openCamera() {
+        // Убеждаемся, что Fragment действительно отображается
+        if (!isVisible || !textureView.isAvailable) return
 
-                var surfaceTexture = textureView.surfaceTexture
-                var surface = Surface(surfaceTexture)
+        try {
+            val cameraId = cameraManager.cameraIdList.first()
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                showToast("Нет разрешения на камеру")
+                return
+            }
 
-                if (surfaceTexture == null) {
-                    return
+            cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
+                override fun onOpened(device: CameraDevice) {
+                    cameraDevice = device
+                    val surfaceTexture = textureView.surfaceTexture ?: return
+                    surfaceTexture.setDefaultBufferSize(previewSize.width, previewSize.height)
+                    val previewSurface = Surface(surfaceTexture)
+
+                    captureRequestBuilder = device.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                    captureRequestBuilder.addTarget(previewSurface)
+
+                    Log.d("Camera", "Camera opened successfully 1")
+
+                    cameraDevice.createCaptureSession(listOf(previewSurface), object : CameraCaptureSession.StateCallback() {
+                        override fun onConfigured(session: CameraCaptureSession) {
+                            captureSession = session
+                            captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, handler)
+                            Log.d("Camera", "Camera opened successfully 2")
+                        }
+
+                        override fun onConfigureFailed(session: CameraCaptureSession) {
+                            showToast("Не удалось настроить камеру")
+                        }
+                    }, handler)
                 }
-                surfaceTexture.setDefaultBufferSize(previewSize.width, previewSize.height)
 
-                var captureRequest = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-                captureRequest.addTarget(surface)
+                override fun onDisconnected(device: CameraDevice) {
+                    device.close()
+                }
 
-                cameraDevice.createCaptureSession(listOf(surface), object : CameraCaptureSession.StateCallback() {
-                    override fun onConfigured(p0: CameraCaptureSession) {
-                        p0.setRepeatingRequest(captureRequest.build(), null, null)
-                    }
-
-                    override fun onConfigureFailed(p0: CameraCaptureSession) {
-                    }
-                }, handler)
-            }
-
-            override fun onDisconnected(p0: CameraDevice) {
-            }
-
-            override fun onError(p0: CameraDevice, p1: Int) {
-            }
-        }, handler)
+                override fun onError(device: CameraDevice, error: Int) {
+                    device.close()
+                    showToast("Ошибка камеры: $error")
+                }
+            }, handler)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            showToast("Ошибка открытия камеры: ${e.message}")
+        }
     }
 }

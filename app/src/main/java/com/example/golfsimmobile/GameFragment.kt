@@ -194,7 +194,15 @@ class GameFragment : Fragment() {
             cameraDevice.close()
         }
     }
-    
+
+    override fun onResume() {
+        super.onResume()
+        if (textureView.isAvailable) {
+            openCamera()
+        } else {
+            textureView.surfaceTextureListener = surfaceTextureListener
+        }
+    }
     private fun showToast(message: String) {
         activity?.runOnUiThread {
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()

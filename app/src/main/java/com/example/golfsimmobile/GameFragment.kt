@@ -3,7 +3,6 @@ package com.example.golfsimmobile
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraAccessException
@@ -11,10 +10,10 @@ import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
-import android.media.MediaRecorder
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Looper
 import android.util.Log
 import android.util.Size
 import android.view.LayoutInflater
@@ -42,15 +41,7 @@ class GameFragment : Fragment() {
     private lateinit var cameraDevice: CameraDevice
     private lateinit var captureRequestBuilder: CaptureRequest.Builder
     private lateinit var captureSession: CameraCaptureSession
-    private lateinit var mediaRecorder: MediaRecorder
     private var previewSize: Size = Size(1280, 720)
-
-    private var isRecording = false
-    private var ballDetected = false
-    private var ballDetectionStartTime = 0L
-    private var ballDetectionStopTime = 0L
-    private lateinit var bitmap: Bitmap
-    private lateinit var videoFilePath: String
 
     private var isTracking = false
 

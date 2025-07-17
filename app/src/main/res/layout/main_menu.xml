@@ -15,14 +15,14 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="Игра" />
+            android:text="@string/game" />
 
         <Button
             android:id="@+id/btnFindBall"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="Найти мяч" />
+            android:text="@string/find_ball" />
     </LinearLayout>
 
     <!-- Контейнер для фрагментов -->

@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">GolfSimMobile</string>
+    <string name="image_description">Background image</string>
+    <string name="start_tracking_ball">Start tracking ball</string>
+    <string name="take_photo">Take photo</string>
+    <string name="game">Game</string>
+    <string name="find_ball">Find ball</string>
 </resources>

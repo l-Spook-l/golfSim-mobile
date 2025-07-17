@@ -17,7 +17,7 @@
         android:id="@+id/trackBallButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start traking ball"
+        android:text="@string/start_tracking_ball"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="16dp" />
@@ -25,7 +25,7 @@
         android:id="@+id/takePhotoButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Take photo"
+        android:text="@string/take_photo"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:layout_margin="16dp" />

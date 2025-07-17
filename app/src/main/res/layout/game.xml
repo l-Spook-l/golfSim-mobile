@@ -14,7 +14,7 @@
         android:background="#000" />
 
     <Button
-        android:id="@+id/recordButton"
+        android:id="@+id/trackBallButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Start traking ball"

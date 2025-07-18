@@ -208,9 +208,4 @@ class GameFragment : Fragment() {
             textureView.surfaceTextureListener = surfaceTextureListener
         }
     }
-    private fun showToast(message: String) {
-        activity?.runOnUiThread {
-            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-        }
-    }
 }

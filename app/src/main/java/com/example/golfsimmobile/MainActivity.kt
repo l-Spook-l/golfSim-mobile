@@ -23,23 +23,20 @@ class MainActivity : AppCompatActivity() {
         gameTabButton = findViewById(R.id.btnGame)
         findBallTabButton = findViewById(R.id.btnFindBall)
 
-        // При первом запуске сразу загружаем GameFragment в контейнер
+        // Создаём и вставляем GameFragment один раз
+        gameFragment = GameFragment()
         supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, GameFragment())
+            .replace(R.id.fragment_container, gameFragment)
             .commit()
 
         // Обработчик нажатия на кнопку "Game"
         gameTabButton.setOnClickListener {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, GameFragment())
-                .commit()
+            gameFragment.hideFindBallButtons()
         }
 
-        // Обработчик нажатия на кнопку "Find Ball"
+        // Нажата "Найти мяч" — показать кнопки поиска мяча
         findBallTabButton.setOnClickListener {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, FindBallFragment())
-                .commit()
+            gameFragment.showFindBallButtons()
         }
     }
 }

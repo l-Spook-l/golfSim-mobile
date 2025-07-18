@@ -5,11 +5,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.SurfaceTexture
-import android.hardware.camera2.CameraAccessException
-import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
-import android.hardware.camera2.CaptureRequest
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
@@ -17,7 +14,6 @@ import android.os.Looper
 import android.util.Log
 import android.util.Size
 import android.view.LayoutInflater
-import android.view.Surface
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
@@ -26,12 +22,14 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.example.golfsimmobile.utils.showToast
 import org.opencv.android.OpenCVLoader
 
 class GameFragment : Fragment() {
+    private lateinit var cameraController: CameraController
+    private lateinit var ballDetector: BallDetector
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
 
     private lateinit var textureView: TextureView
@@ -39,10 +37,7 @@ class GameFragment : Fragment() {
     private lateinit var handler: Handler
     private lateinit var cameraManager: CameraManager
     private lateinit var cameraDevice: CameraDevice
-    private lateinit var captureRequestBuilder: CaptureRequest.Builder
-    private lateinit var captureSession: CameraCaptureSession
     private var previewSize: Size = Size(1280, 720)
-
     private var isTracking = false
 
     override fun onCreateView(
@@ -53,8 +48,6 @@ class GameFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        textureView = view.findViewById(R.id.textureView)
-        val trackButton = view.findViewById<Button>(R.id.recordButton)  // изменить назв кнопки
         imageView = view.findViewById(R.id.imageView)
         textureView = view.findViewById(R.id.textureView)
 
@@ -62,15 +55,29 @@ class GameFragment : Fragment() {
         thread.start()
         handler = Handler(thread.looper)
 
+        ballDetector = BallDetector(requireContext(), textureView, imageView) {
+            cameraController.openCamera() // вернём камеру в режим превью
+        }
+
+        cameraController = CameraController(
+            requireContext(),
+            textureView,
+            previewSize,
+            handler,
+            ballDetector,
+        )
+
+        val trackButton = view.findViewById<Button>(R.id.trackBallButton)  // изменить назв кнопки
+
         // Инициализация обработчика разрешений
         requestPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
             if (permissions.values.all { it }) {
-                showToast("Разрешения предоставлены")
-                openCamera()
+                showToast(requireContext(),"Разрешения предоставлены")
+                cameraController.openCamera()
             } else {
-                showToast("Не все разрешения предоставлены")
+                showToast(requireContext(),"Не все разрешения предоставлены")
             }
         }
 
@@ -84,12 +91,22 @@ class GameFragment : Fragment() {
                 trackButton.text = "Stop tracking ball"
                 trackButton.setBackgroundColor(Color.RED)
                 Toast.makeText(context, "Начинаем отслеживание мяча", Toast.LENGTH_SHORT).show()
-                // TODO: Запустить отслеживание
+                // 👇Запускаем тяжелую задачу в фоновом потоке
+                handler.post {
+                    ballDetector.processFrame()
+                }
             } else {
                 trackButton.text = "Start tracking ball"
                 trackButton.setBackgroundColor(Color.GREEN)
                 Toast.makeText(context, "Отслеживание остановлено", Toast.LENGTH_SHORT).show()
-                // TODO: Остановить отслеживание
+//                isTracking = true
+                handler.removeCallbacksAndMessages(null)
+                // Перезапустить превью
+                Handler(Looper.getMainLooper()).postDelayed({
+                    cameraController.openCamera()
+                }, 300)
+                ballDetector.reset()
+                ballDetector.clearOverlay()
             }
         }
         checkAndRequestPermissions()
@@ -97,7 +114,7 @@ class GameFragment : Fragment() {
 
     private val surfaceTextureListener = object : TextureView.SurfaceTextureListener {
         override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
-            openCamera()
+            cameraController.openCamera()
         }
 
         override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
@@ -130,7 +147,7 @@ class GameFragment : Fragment() {
             requestPermissionLauncher.launch(permissions)
         } else {
             if (textureView.isAvailable) {
-                openCamera()
+                cameraController.openCamera()
             }
         }
     }
@@ -145,7 +162,7 @@ class GameFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         if (textureView.isAvailable) {
-            openCamera()
+            cameraController.openCamera()
         } else {
             textureView.surfaceTextureListener = surfaceTextureListener
         }

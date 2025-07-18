@@ -106,6 +106,12 @@ class GameFragment : Fragment() {
 
         override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
             // OpenCV логика обработки кадра — вставляется сюда
+            if (isTracking) {
+                ballDetector.processFrame()
+            } else {
+                ballDetector.reset()
+                ballDetector.clearOverlay()
+            }
         }
     }
 

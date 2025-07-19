@@ -22,16 +22,15 @@ class BallDetector(
     private val onRecordingStopped: () -> Unit // колбэк
 ) {
     private lateinit var videoRecorder: VideoRecorder
+    private var isRecording = false
+    private var wasRecording = false
+    private var ballDetected = false
+    private var ballDetectionStartTime: Long = 0
+    private var ballDetectionStopTime: Long = 0
 
     fun initCamera(cameraDevice: CameraDevice, handler: Handler) {
         videoRecorder = VideoRecorder(context, textureView, cameraDevice, handler)
     }
-
-    private var isRecording = false
-    var wasRecording = false
-    private var ballDetected = false
-    private var ballDetectionStartTime: Long = 0
-    private var ballDetectionStopTime: Long = 0
 
     // Инициализация hsvVals
     private val hsvVals = mapOf(
@@ -47,6 +46,14 @@ class BallDetector(
         isRecording = false
         wasRecording = false
         ballDetected = false
+    }
+
+    fun clearOverlay() {
+        if (context is Activity) {
+            context.runOnUiThread {
+                imageView.setImageBitmap(null)  // Очистим ImageView
+            }
+        }
     }
 
     fun processFrame(){

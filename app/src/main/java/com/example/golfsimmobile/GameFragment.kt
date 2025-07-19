@@ -36,6 +36,9 @@ class GameFragment : Fragment() {
     private lateinit var handler: Handler
     private lateinit var cameraManager: CameraManager
     private lateinit var cameraDevice: CameraDevice
+    private lateinit var takePhotoButton: Button
+    private lateinit var trackBallButton: Button
+    private lateinit var previewBallDetectorButton: Button
     private var previewSize: Size = Size(1280, 720)
     private var isTracking = false
     private var isPreviewBallDetector = false
@@ -67,9 +70,9 @@ class GameFragment : Fragment() {
             ballDetector,
         )
 
-        val trackButton = view.findViewById<Button>(R.id.trackBallButton)  // изменить назв кнопки
-        val takePhotoButton = view.findViewById<Button>(R.id.takePhotoButton)
-        val previewBallDetectorButton = view.findViewById<Button>(R.id.previewBallDetectorButton)
+        takePhotoButton = view.findViewById(R.id.takePhotoButton)
+        trackBallButton = view.findViewById(R.id.trackBallButton)
+        previewBallDetectorButton = view.findViewById(R.id.previewBallDetectorButton)
 
         // Инициализация обработчика разрешений
         requestPermissionLauncher = registerForActivityResult(
@@ -87,9 +90,9 @@ class GameFragment : Fragment() {
 
         textureView.surfaceTextureListener = surfaceTextureListener
 
-        trackButton.setOnClickListener {
+        trackBallButton.setOnClickListener {
             isTracking = !isTracking
-            toggleBallDetection(isTracking, trackButton, "game")
+            toggleBallDetection(isTracking, trackBallButton, "game")
         }
 
         previewBallDetectorButton.setOnClickListener {
@@ -125,6 +128,9 @@ class GameFragment : Fragment() {
         }
     }
 
+    private val mainActivity: MainActivity
+        get() = requireActivity() as MainActivity
+
     fun toggleBallDetection(
         isEnabled: Boolean,
         button: Button,
@@ -133,7 +139,11 @@ class GameFragment : Fragment() {
         if (isEnabled) {
             when (mode) {
                 "game" ->  button.text = "Stop tracking ball"
-                "preview" -> button.text = "Stop preview"
+                "preview" -> {
+                    button.text = "Stop preview"
+                    takePhotoButton.isEnabled = false
+                    mainActivity.setTabButtonsEnabled(false)  // Отключаем кнопки вкладок
+                }
             }
             button.setBackgroundColor(Color.RED)
             Toast.makeText(context, "Начинаем отслеживание мяча", Toast.LENGTH_SHORT).show()
@@ -143,7 +153,11 @@ class GameFragment : Fragment() {
         } else {
             when (mode) {
                 "game" -> button.text = "Stop tracking ball"
-                "preview" -> button.text = "Stop preview"
+                "preview" -> {
+                    button.text = "Preview ball detector"
+                    takePhotoButton.isEnabled = true
+                    mainActivity.setTabButtonsEnabled(true)  // Отключаем кнопки вкладок
+                }
             }
             button.setBackgroundColor(Color.GREEN)
             Toast.makeText(context, "Отслеживание остановлено", Toast.LENGTH_SHORT).show()

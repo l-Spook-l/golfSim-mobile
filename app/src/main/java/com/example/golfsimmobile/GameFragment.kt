@@ -31,7 +31,6 @@ class GameFragment : Fragment() {
     private lateinit var cameraController: CameraController
     private lateinit var ballDetector: BallDetector
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
-
     private lateinit var textureView: TextureView
     private lateinit var imageView: ImageView
     private lateinit var handler: Handler
@@ -68,6 +67,7 @@ class GameFragment : Fragment() {
         )
 
         val trackButton = view.findViewById<Button>(R.id.trackBallButton)  // изменить назв кнопки
+        val takePhotoButton = view.findViewById<Button>(R.id.takePhotoButton)
 
         // Инициализация обработчика разрешений
         requestPermissionLauncher = registerForActivityResult(
@@ -110,6 +110,10 @@ class GameFragment : Fragment() {
             }
         }
         checkAndRequestPermissions()
+
+        takePhotoButton.setOnClickListener {
+            takePhoto() // функция снимка
+        }
     }
 
     private val surfaceTextureListener = object : TextureView.SurfaceTextureListener {
@@ -150,6 +154,11 @@ class GameFragment : Fragment() {
                 cameraController.openCamera()
             }
         }
+    }
+
+    private fun takePhoto() {
+        val bitmap = textureView.bitmap ?: return
+        PhotoUploader.uploadPhoto(requireContext(), bitmap)
     }
 
     override fun onPause() {

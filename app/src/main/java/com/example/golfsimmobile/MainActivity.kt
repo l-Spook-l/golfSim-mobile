@@ -40,4 +40,9 @@ class MainActivity : AppCompatActivity() {
             gameFragment.showFindBallButtons()
         }
     }
+
+    fun setTabButtonsEnabled(enabled: Boolean) {
+        gameTabButton.isEnabled = enabled
+        findBallTabButton.isEnabled = enabled
+    }
 }

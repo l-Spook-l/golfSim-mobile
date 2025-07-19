@@ -5,4 +5,5 @@
     <string name="take_photo">Take photo</string>
     <string name="game">Game</string>
     <string name="find_ball">Find ball</string>
+    <string name="preview_ball">Preview ball detector</string>
 </resources>

@@ -56,7 +56,7 @@ class BallDetector(
         }
     }
 
-    fun processFrame(){
+    fun processFrame(mode: String){
         if (!::videoRecorder.isInitialized) {
             Log.e("BallDetector", "VideoRecorder not initialized")
             return
@@ -117,31 +117,35 @@ class BallDetector(
         hierarchy.release()
         blackMat.release()
 
-        // Логика для записи видео
-        if (ballDetectedInCurrentFrame) {
-            if (!ballDetected) {
-                ballDetectionStartTime = System.currentTimeMillis()
-                ballDetected = true
-            } else if (System.currentTimeMillis() - ballDetectionStartTime > 1500) {
-                if (!isRecording) {
-                    videoRecorder.startRecording()
-                    isRecording = true
-                    wasRecording = true
-                }
-            }
-        } else {
-            if (ballDetected) {
-                ballDetectionStopTime = System.currentTimeMillis()
-                ballDetected = false
-            } else if (System.currentTimeMillis() - ballDetectionStopTime > 1500) {
-                if (isRecording) {
-                    videoRecorder.stopRecording()
-                    videoRecorder.uploadVideo() // Загружаем видео после остановки записи
-                    isRecording = false
+        when (mode) {
+            "game" -> {
+                // Логика для записи видео
+                if (ballDetectedInCurrentFrame) {
+                    if (!ballDetected) {
+                        ballDetectionStartTime = System.currentTimeMillis()
+                        ballDetected = true
+                    } else if (System.currentTimeMillis() - ballDetectionStartTime > 1500) {
+                        if (!isRecording) {
+                            videoRecorder.startRecording()
+                            isRecording = true
+                            wasRecording = true
+                        }
+                    }
+                } else {
+                    if (ballDetected) {
+                        ballDetectionStopTime = System.currentTimeMillis()
+                        ballDetected = false
+                    } else if (System.currentTimeMillis() - ballDetectionStopTime > 1500) {
+                        if (isRecording) {
+                            videoRecorder.stopRecording()
+                            videoRecorder.uploadVideo() // Загружаем видео после остановки записи
+                            isRecording = false
 
-                    // 💡 Вызов колбэка для восстановления превью
-                    onRecordingStopped()
-                    wasRecording = false
+                            // 💡 Вызов колбэка для восстановления превью
+                            onRecordingStopped()
+                            wasRecording = false
+                        }
+                    }
                 }
             }
         }

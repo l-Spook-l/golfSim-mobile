@@ -38,6 +38,7 @@ class GameFragment : Fragment() {
     private lateinit var cameraDevice: CameraDevice
     private var previewSize: Size = Size(1280, 720)
     private var isTracking = false
+    private var isPreviewBallDetector = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -68,6 +69,7 @@ class GameFragment : Fragment() {
 
         val trackButton = view.findViewById<Button>(R.id.trackBallButton)  // изменить назв кнопки
         val takePhotoButton = view.findViewById<Button>(R.id.takePhotoButton)
+        val previewBallDetectorButton = view.findViewById<Button>(R.id.previewBallDetectorButton)
 
         // Инициализация обработчика разрешений
         requestPermissionLauncher = registerForActivityResult(
@@ -87,27 +89,12 @@ class GameFragment : Fragment() {
 
         trackButton.setOnClickListener {
             isTracking = !isTracking
-            if (isTracking) {
-                trackButton.text = "Stop tracking ball"
-                trackButton.setBackgroundColor(Color.RED)
-                Toast.makeText(context, "Начинаем отслеживание мяча", Toast.LENGTH_SHORT).show()
-                // 👇Запускаем тяжелую задачу в фоновом потоке
-                handler.post {
-                    ballDetector.processFrame()
-                }
-            } else {
-                trackButton.text = "Start tracking ball"
-                trackButton.setBackgroundColor(Color.GREEN)
-                Toast.makeText(context, "Отслеживание остановлено", Toast.LENGTH_SHORT).show()
-//                isTracking = true
-                handler.removeCallbacksAndMessages(null)
-                // Перезапустить превью
-                Handler(Looper.getMainLooper()).postDelayed({
-                    cameraController.openCamera()
-                }, 300)
-                ballDetector.reset()
-                ballDetector.clearOverlay()
-            }
+            toggleBallDetection(isTracking, trackButton, "game")
+        }
+
+        previewBallDetectorButton.setOnClickListener {
+            isPreviewBallDetector = !isPreviewBallDetector
+            toggleBallDetection(isPreviewBallDetector, previewBallDetectorButton, "preview")
         }
         checkAndRequestPermissions()
 
@@ -128,11 +115,44 @@ class GameFragment : Fragment() {
         override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
             // OpenCV логика обработки кадра — вставляется сюда
             if (isTracking) {
-                ballDetector.processFrame()
+                ballDetector.processFrame("game")
+            } else if (isPreviewBallDetector) {
+                ballDetector.processFrame("preview")
             } else {
                 ballDetector.reset()
                 ballDetector.clearOverlay()
             }
+        }
+    }
+
+    fun toggleBallDetection(
+        isEnabled: Boolean,
+        button: Button,
+        mode: String
+    ) {
+        if (isEnabled) {
+            when (mode) {
+                "game" ->  button.text = "Stop tracking ball"
+                "preview" -> button.text = "Stop preview"
+            }
+            button.setBackgroundColor(Color.RED)
+            Toast.makeText(context, "Начинаем отслеживание мяча", Toast.LENGTH_SHORT).show()
+            handler.post {
+                ballDetector.processFrame(mode)
+            }
+        } else {
+            when (mode) {
+                "game" -> button.text = "Stop tracking ball"
+                "preview" -> button.text = "Stop preview"
+            }
+            button.setBackgroundColor(Color.GREEN)
+            Toast.makeText(context, "Отслеживание остановлено", Toast.LENGTH_SHORT).show()
+            handler.removeCallbacksAndMessages(null)
+            Handler(Looper.getMainLooper()).postDelayed({
+                cameraController.openCamera()
+            }, 300)
+            ballDetector.reset()
+            ballDetector.clearOverlay()
         }
     }
 

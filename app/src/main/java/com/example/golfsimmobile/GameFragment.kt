@@ -156,6 +156,18 @@ class GameFragment : Fragment() {
         }
     }
 
+    fun showFindBallButtons() {
+        view?.findViewById<Button>(R.id.trackBallButton)?.visibility = View.GONE
+        view?.findViewById<Button>(R.id.takePhotoButton)?.visibility = View.VISIBLE
+        view?.findViewById<Button>(R.id.previewBallDetectorButton)?.visibility = View.VISIBLE
+    }
+
+    fun hideFindBallButtons() {
+        view?.findViewById<Button>(R.id.trackBallButton)?.visibility = View.VISIBLE
+        view?.findViewById<Button>(R.id.takePhotoButton)?.visibility = View.GONE
+        view?.findViewById<Button>(R.id.previewBallDetectorButton)?.visibility = View.GONE
+    }
+
     private fun takePhoto() {
         val bitmap = textureView.bitmap ?: return
         PhotoUploader.uploadPhoto(requireContext(), bitmap)

@@ -61,6 +61,7 @@ class GameFragment : Fragment() {
         ballDetector = BallDetector(requireContext(), textureView, imageView) {
             cameraController.openCamera() // вернём камеру в режим превью
         }
+        ballDetector.startHsvFetching()
 
         cameraController = CameraController(
             requireContext(),
@@ -212,6 +213,7 @@ class GameFragment : Fragment() {
         if (this::cameraDevice.isInitialized) {
             cameraDevice.close()
         }
+        ballDetector.stopHsvFetching() // ← остановка обновления HSV
     }
 
     override fun onResume() {

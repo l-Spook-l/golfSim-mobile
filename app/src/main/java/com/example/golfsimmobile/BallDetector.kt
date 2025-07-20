@@ -27,17 +27,18 @@ class BallDetector(
     private var ballDetected = false
     private var ballDetectionStartTime: Long = 0
     private var ballDetectionStopTime: Long = 0
+    private var hsvFetcher: HSVFetcher? = null
 
     fun initCamera(cameraDevice: CameraDevice, handler: Handler) {
         videoRecorder = VideoRecorder(context, textureView, cameraDevice, handler)
     }
 
     // Инициализация hsvVals
-    private val hsvVals = mapOf(
-        "hmin" to 24,
-        "smin" to 119,
-        "vmin" to 62,
-        "hmax" to 74,
+    private var hsvVals = mapOf(
+        "hmin" to 0,
+        "smin" to 0,
+        "vmin" to 0,
+        "hmax" to 255,
         "smax" to 255,
         "vmax" to 255
     )
@@ -54,6 +55,27 @@ class BallDetector(
                 imageView.setImageBitmap(null)  // Очистим ImageView
             }
         }
+    }
+
+    fun updateHsvValues(newHsvVals: Map<String, Int>) {
+        Log.d("BallDetector", "Новые HSV значения: $newHsvVals")
+        if (hsvVals == newHsvVals) {
+            Log.d("BallDetector", "HSV значения не изменились")
+        } else {
+            Log.d("BallDetector", "HSV значения изменились")
+            hsvVals = newHsvVals
+        }
+    }
+
+    fun startHsvFetching() {
+        hsvFetcher = HSVFetcher("http://192.168.50.107:8000/get-hsv") { hsvMap ->
+            updateHsvValues(hsvMap)
+        }
+        hsvFetcher?.startFetching()
+    }
+
+    fun stopHsvFetching() {
+        hsvFetcher?.stopFetching()
     }
 
     fun processFrame(mode: String){

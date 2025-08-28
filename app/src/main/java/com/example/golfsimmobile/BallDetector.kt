@@ -28,6 +28,8 @@ class BallDetector(
     private var ballDetectionStartTime: Long = 0
     private var ballDetectionStopTime: Long = 0
     private var hsvFetcher: HSVFetcher? = null
+    private var lowerYellow = Scalar(0.0, 0.0, 0.0)  // нижняя граница HSV жёлтого
+    private var upperYellow = Scalar(255.0, 255.0, 255.0)  // верхняя граница HSV жёлтого
 
     fun initCamera(cameraDevice: CameraDevice, handler: Handler) {
         videoRecorder = VideoRecorder(context, textureView, cameraDevice, handler)
@@ -57,7 +59,7 @@ class BallDetector(
         }
     }
 
-    fun updateHsvValues(newHsvVals: Map<String, Int>) {
+    private fun updateHsvValues(newHsvVals: Map<String, Int>) {
         Log.d("BallDetector", "Новые HSV значения: $newHsvVals")
         if (hsvVals == newHsvVals) {
             Log.d("BallDetector", "HSV значения не изменились")
@@ -93,8 +95,8 @@ class BallDetector(
         Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGB2HSV)
 
         // Диапазоны для цвета
-        val lowerYellow = Scalar(hsvVals["hmin"]!!.toDouble(), hsvVals["smin"]!!.toDouble(), hsvVals["vmin"]!!.toDouble())
-        val upperYellow = Scalar(hsvVals["hmax"]!!.toDouble(), hsvVals["smax"]!!.toDouble(), hsvVals["vmax"]!!.toDouble())
+        lowerYellow = Scalar(hsvVals["hmin"]!!.toDouble(), hsvVals["smin"]!!.toDouble(), hsvVals["vmin"]!!.toDouble())
+        upperYellow = Scalar(hsvVals["hmax"]!!.toDouble(), hsvVals["smax"]!!.toDouble(), hsvVals["vmax"]!!.toDouble())
 
         val mask = Mat()
 

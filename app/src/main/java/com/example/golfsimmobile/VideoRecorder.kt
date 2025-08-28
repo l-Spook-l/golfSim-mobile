@@ -41,7 +41,7 @@ class VideoRecorder(
     private lateinit var videoFilePath: String
 
     companion object {
-        private const val SERVER_URL = "http://192.168.50.107:8000/upload/"
+        private const val SERVER_URL = "http://192.168.50.107:7878/upload/"
     }
 
     private fun setupMediaRecorder() {

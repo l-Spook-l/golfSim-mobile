@@ -68,7 +68,7 @@ class BallDetector(
     }
 
     fun startHsvFetching() {
-        hsvFetcher = HSVFetcher("http://192.168.50.107:8000/get-hsv") { hsvMap ->
+        hsvFetcher = HSVFetcher("http://192.168.50.107:7878/get-hsv") { hsvMap ->
             updateHsvValues(hsvMap)
         }
         hsvFetcher?.startFetching()

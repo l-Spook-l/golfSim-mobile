@@ -12,7 +12,7 @@ import java.io.IOException
 
 object PhotoUploader {
 
-    private const val SERVER_URL = "http://192.168.50.107:8000/upload/" // можно параметризовать
+    private const val SERVER_URL = "http://192.168.50.107:7878/upload/"
 
     fun uploadPhoto(context: Context, bitmap: Bitmap) {
         val client = OkHttpClient()

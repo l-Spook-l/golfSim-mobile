@@ -6,6 +6,7 @@ import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
+import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.os.Environment
 import android.os.Handler
@@ -80,6 +81,8 @@ class VideoRecorder(
             val recordingSurface = mediaRecorder.surface
             val previewSurface = Surface(textureView.surfaceTexture)
 
+            playSound(context, R.raw.ding_sfx)
+
             captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
             captureRequestBuilder.addTarget(recordingSurface)
             captureRequestBuilder.addTarget(previewSurface)
@@ -110,11 +113,7 @@ class VideoRecorder(
     // после этого метода надо вызывать - startPreview()
     fun stopRecording() {
         try {
-            if (::captureSession.isInitialized) {
-                captureSession.stopRepeating()
-                captureSession.abortCaptures()
-                captureSession.close()
-            }
+            playSound(context, R.raw.ding_sfx)
 
             mediaRecorder.stop()
             mediaRecorder.reset()
@@ -167,5 +166,13 @@ class VideoRecorder(
                 }
             }
         }
+    }
+
+    fun playSound(context: Context, soundResourceId: Int) {
+        val mediaPlayer = MediaPlayer.create(context, soundResourceId)
+        mediaPlayer.setOnCompletionListener {
+            it.release()
+        }
+        mediaPlayer.start()
     }
 }

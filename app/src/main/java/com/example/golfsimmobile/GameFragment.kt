@@ -109,8 +109,6 @@ class GameFragment : Fragment() {
         }
 
         takePhotoButton.setOnClickListener {
-            takePhoto() // функция снимка
-        }
             if (!isUploading) {
                 takePhoto()
             }
@@ -121,15 +119,18 @@ class GameFragment : Fragment() {
 
     private val surfaceTextureListener = object : TextureView.SurfaceTextureListener {
         override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+            configureTransform(width, height)
             cameraController.openCamera()
         }
 
-        override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
+        override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {
+            configureTransform(width, height)
+        }
 
-        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean = true  // у меня false
+        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean = false  // у меня false
 
         override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
-            // OpenCV логика обработки кадра — вставляется сюда
+            // OpenCV логика обработки кадра
             if (isTracking) {
                 ballDetector.processFrame("game")
             } else if (isPreviewBallDetector) {
@@ -144,7 +145,7 @@ class GameFragment : Fragment() {
     private val mainActivity: MainActivity
         get() = requireActivity() as MainActivity
 
-    fun toggleBallDetection(
+    private fun toggleBallDetection(
         isEnabled: Boolean,
         button: Button,
         mode: String
@@ -165,7 +166,7 @@ class GameFragment : Fragment() {
             }
         } else {
             when (mode) {
-                "game" -> button.text = "Stop tracking ball"
+                "game" -> button.text = "Start tracking ball"
                 "preview" -> {
                     button.text = "Preview ball detector"
                     takePhotoButton.isEnabled = true
@@ -236,6 +237,42 @@ class GameFragment : Fragment() {
             isUploading = false
         }
     }
+
+    private fun configureTransform(viewWidth: Int, viewHeight: Int) {
+        val rotation = requireActivity().windowManager.defaultDisplay.rotation
+        val matrix = android.graphics.Matrix()
+        val centerX = viewWidth / 2f
+        val centerY = viewHeight / 2f
+
+        val previewWidth = previewSize.width.toFloat()
+        val previewHeight = previewSize.height.toFloat()
+        val viewRect = android.graphics.RectF(0f, 0f, viewWidth.toFloat(), viewHeight.toFloat())
+        val bufferRect = android.graphics.RectF(0f, 0f, previewHeight, previewWidth)
+
+        bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY())
+
+        val scale = maxOf(
+            viewHeight / previewHeight,
+            viewWidth / previewWidth
+        )
+
+        when (rotation) {
+            android.view.Surface.ROTATION_90,
+            android.view.Surface.ROTATION_270 -> {
+                matrix.setRectToRect(viewRect, bufferRect, android.graphics.Matrix.ScaleToFit.FILL)
+                matrix.postScale(scale, scale, centerX, centerY)
+                matrix.postRotate(90f * (rotation - 2), centerX, centerY)
+            }
+            android.view.Surface.ROTATION_180 -> {
+                matrix.postRotate(180f, centerX, centerY)
+            }
+        }
+
+        textureView.setTransform(matrix)
+        imageView.imageMatrix = matrix
+        imageView.scaleType = ImageView.ScaleType.MATRIX
+    }
+
 
     override fun onPause() {
         super.onPause()

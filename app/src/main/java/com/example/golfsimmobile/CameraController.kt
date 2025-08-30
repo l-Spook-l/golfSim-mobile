@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
+import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
@@ -29,11 +30,16 @@ class CameraController(
     private lateinit var captureRequestBuilder: CaptureRequest.Builder
     private val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
+    private var cameraId: String = ""
+    private var sensorOrientation: Int = 0
+
     fun openCamera() {
         if (!textureView.isAvailable) return
 
         try {
-            val cameraId = cameraManager.cameraIdList.first()
+            cameraId = cameraManager.cameraIdList.first()
+            val characteristics = cameraManager.getCameraCharacteristics(cameraId)
+            sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) ?: 0
 
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED
@@ -45,7 +51,7 @@ class CameraController(
             cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
                 override fun onOpened(device: CameraDevice) {
                     cameraDevice = device
-                    ballDetector.initCamera(cameraDevice, handler)
+                    ballDetector.initCamera(cameraDevice, handler, sensorOrientation)
                     startPreview()
                 }
 

@@ -30,9 +30,12 @@ class BallDetector(
     private var hsvFetcher: HSVFetcher? = null
     private var lowerYellow = Scalar(0.0, 0.0, 0.0)  // нижняя граница HSV жёлтого
     private var upperYellow = Scalar(255.0, 255.0, 255.0)  // верхняя граница HSV жёлтого
+    private var sensorOrientation: Int = 0
 
-    fun initCamera(cameraDevice: CameraDevice, handler: Handler) {
+    fun initCamera(cameraDevice: CameraDevice, handler: Handler, sensorOrientation: Int) {
+        this.sensorOrientation = sensorOrientation
         videoRecorder = VideoRecorder(context, textureView, cameraDevice, handler)
+        videoRecorder.setSensorOrientation(sensorOrientation)
     }
 
     // Инициализация hsvVals
@@ -99,23 +102,19 @@ class BallDetector(
         upperYellow = Scalar(hsvVals["hmax"]!!.toDouble(), hsvVals["smax"]!!.toDouble(), hsvVals["vmax"]!!.toDouble())
 
         val mask = Mat()
-
         // Создаем маску, которая выделяет желтые области
         Core.inRange(mat, lowerYellow, upperYellow, mask)
 
         // Новый черный фон
         val blackMat = Mat.zeros(mat.size(), mat.type())
-
         // Накладываем маску на черный фон, чтобы оставить только желтые объекты
         mat.copyTo(blackMat, mask)
-
         // Поиск контуров на маске
         val contours = ArrayList<MatOfPoint>()
         val hierarchy = Mat()
         Imgproc.findContours(mask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
 
         var ballDetectedInCurrentFrame = false
-
         // Обработка найденных контуров
         for (contour in contours) {
             val boundingRect = Imgproc.boundingRect(contour)

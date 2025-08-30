@@ -1,5 +1,6 @@
 package com.example.golfsimmobile
 
+import android.app.Activity
 import android.content.Context
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
@@ -40,6 +41,7 @@ class VideoRecorder(
     private lateinit var captureSession: CameraCaptureSession
     private var isRecording = false
     private lateinit var videoFilePath: String
+    private var sensorOrientation: Int = 0
 
     companion object {
         private const val SERVER_URL = "http://192.168.50.107:7878/upload/"
@@ -51,6 +53,19 @@ class VideoRecorder(
             mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
             mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
             mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+
+            // Добавляем ориентацию
+            val windowManager = (context as Activity).windowManager
+            val rotation = windowManager.defaultDisplay.rotation
+
+            val orientation = when (rotation) {
+                Surface.ROTATION_0 -> 90
+                Surface.ROTATION_90 -> 0
+                Surface.ROTATION_180 -> 270
+                Surface.ROTATION_270 -> 180
+                else -> 0
+            }
+            mediaRecorder.setOrientationHint(orientation)
 
             val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
             val videoFileName = "VIDEO_$timeStamp.mp4"
@@ -129,7 +144,6 @@ class VideoRecorder(
         }
     }
 
-//    fun uploadVideo(filePath: String) {
     fun uploadVideo() {
         val client = OkHttpClient()
         val file = File(videoFilePath)
@@ -148,7 +162,7 @@ class VideoRecorder(
             .post(requestBody)
             .build()
 
-        // Вместо Thread запускаем корутину
+        // Запускаем корутину
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = client.newCall(request).execute()
@@ -166,6 +180,10 @@ class VideoRecorder(
                 }
             }
         }
+    }
+
+    fun setSensorOrientation(orientation: Int) {
+        sensorOrientation = orientation
     }
 
     fun playSound(context: Context, soundResourceId: Int) {

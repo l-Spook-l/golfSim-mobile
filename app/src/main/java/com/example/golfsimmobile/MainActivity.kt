@@ -14,10 +14,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Не гасить экран
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        // Делаем системные панели прозрачными
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
 
-        // Устанавливаем XML-макет активности (main_menu.xml)
         setContentView(R.layout.main_menu)
 
         // Получаем ссылки на кнопки по ID

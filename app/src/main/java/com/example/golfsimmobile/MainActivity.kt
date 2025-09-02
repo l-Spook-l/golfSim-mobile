@@ -1,12 +1,20 @@
 package com.example.golfsimmobile
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
 
+/**
+ * Главная активность приложения.
+ *
+ * Здесь настраиваются:
+ * - системные панели (прозрачность, цвет иконок);
+ * - кнопки навигации между режимами;
+ * - вставка и управление [GameFragment].
+ */
 class MainActivity : AppCompatActivity() {
-    // Объявляем кнопки
     private lateinit var gameTabButton: Button
     private lateinit var findBallTabButton: Button
     private lateinit var gameFragment: GameFragment
@@ -20,7 +28,10 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.main_menu)
 
-        // Получаем ссылки на кнопки по ID
+        // Не даём экрану гаснуть во время игры
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        // Получаем ссылки на кнопки
         gameTabButton = findViewById(R.id.btnGame)
         findBallTabButton = findViewById(R.id.btnFindBall)
 
@@ -30,17 +41,20 @@ class MainActivity : AppCompatActivity() {
             .replace(R.id.fragment_container, gameFragment)
             .commit()
 
-        // Нажата "Игра" — скрыть кнопки поиска мяча
+        // Навешиваем обработчики на кнопки переключения режимов
         gameTabButton.setOnClickListener {
             gameFragment.hideFindBallButtons()
         }
-
-        // Нажата "Найти мяч" — показать кнопки поиска мяча
         findBallTabButton.setOnClickListener {
             gameFragment.showFindBallButtons()
         }
     }
 
+    /**
+     * Включает или выключает кнопки вкладок.
+     *
+     * @param enabled true — кнопки активны, false — заблокированы.
+     */
     fun setTabButtonsEnabled(enabled: Boolean) {
         gameTabButton.isEnabled = enabled
         findBallTabButton.isEnabled = enabled

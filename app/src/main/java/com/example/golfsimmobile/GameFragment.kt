@@ -3,6 +3,7 @@ package com.example.golfsimmobile
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraDevice
@@ -17,7 +18,6 @@ import android.view.LayoutInflater
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.Toast
@@ -27,6 +27,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.golfsimmobile.utils.showToast
+import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.opencv.android.OpenCVLoader
@@ -40,9 +41,9 @@ class GameFragment : Fragment() {
     private lateinit var handler: Handler
     private lateinit var cameraManager: CameraManager
     private lateinit var cameraDevice: CameraDevice
-    private lateinit var takePhotoButton: Button
-    private lateinit var trackBallButton: Button
-    private lateinit var previewBallDetectorButton: Button
+    private lateinit var takePhotoButton: MaterialButton
+    private lateinit var trackBallButton: MaterialButton
+    private lateinit var previewBallDetectorButton: MaterialButton
     private lateinit var progressBar: ProgressBar
     private var previewSize: Size = Size(1280, 720)
     private var isTracking = false
@@ -82,15 +83,22 @@ class GameFragment : Fragment() {
         trackBallButton = view.findViewById(R.id.trackBallButton)
         previewBallDetectorButton = view.findViewById(R.id.previewBallDetectorButton)
 
+        // Инициализация OpenCV
+        if (!OpenCVLoader.initDebug()) {
+            Log.e("OpenCV", "OpenCV initialization failed")
+        } else {
+            Log.d("OpenCV", "OpenCV initialization succeeded")
+        }
+
         // Инициализация обработчика разрешений
         requestPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
             if (permissions.values.all { it }) {
-                showToast(requireContext(),"Разрешения предоставлены")
+                showToast(requireContext(), "Разрешения предоставлены")
                 cameraController.openCamera()
             } else {
-                showToast(requireContext(),"Не все разрешения предоставлены")
+                showToast(requireContext(), "Не все разрешения предоставлены")
             }
         }
 
@@ -127,7 +135,8 @@ class GameFragment : Fragment() {
             configureTransform(width, height)
         }
 
-        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean = false  // у меня false
+        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
+            false  // у меня false
 
         override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
             // OpenCV логика обработки кадра
@@ -147,19 +156,21 @@ class GameFragment : Fragment() {
 
     private fun toggleBallDetection(
         isEnabled: Boolean,
-        button: Button,
+        button: MaterialButton,
         mode: String
     ) {
         if (isEnabled) {
             when (mode) {
-                "game" ->  button.text = "Stop tracking ball"
+                "game" -> button.text = "Stop tracking ball"
                 "preview" -> {
                     button.text = "Stop preview"
                     takePhotoButton.isEnabled = false
                     mainActivity.setTabButtonsEnabled(false)  // Отключаем кнопки вкладок
                 }
             }
-            button.setBackgroundColor(Color.RED)
+            button.backgroundTintList = ColorStateList.valueOf(Color.RED)
+            button.strokeColor = ColorStateList.valueOf(Color.TRANSPARENT)
+
             Toast.makeText(context, "Начинаем отслеживание мяча", Toast.LENGTH_SHORT).show()
             handler.post {
                 ballDetector.processFrame(mode)
@@ -168,12 +179,14 @@ class GameFragment : Fragment() {
             when (mode) {
                 "game" -> button.text = "Start tracking ball"
                 "preview" -> {
-                    button.text = "Preview ball detector"
+                    button.text = "Preview ball"
                     takePhotoButton.isEnabled = true
-                    mainActivity.setTabButtonsEnabled(true)  // Отключаем кнопки вкладок
+                    mainActivity.setTabButtonsEnabled(true)  // Включаем кнопки вкладок
                 }
             }
-            button.setBackgroundColor(Color.GREEN)
+            button.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#99000000"))
+            button.strokeColor = ColorStateList.valueOf(Color.parseColor("#80FFFFFF"))
+
             Toast.makeText(context, "Отслеживание остановлено", Toast.LENGTH_SHORT).show()
             handler.removeCallbacksAndMessages(null)
             Handler(Looper.getMainLooper()).postDelayed({
@@ -192,7 +205,10 @@ class GameFragment : Fragment() {
         )
 
         val notGranted = permissions.filter {
-            ContextCompat.checkSelfPermission(requireContext(), it) != PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                it
+            ) != PackageManager.PERMISSION_GRANTED
         }
 
         if (notGranted.isNotEmpty()) {
@@ -205,15 +221,16 @@ class GameFragment : Fragment() {
     }
 
     fun showFindBallButtons() {
-        view?.findViewById<Button>(R.id.trackBallButton)?.visibility = View.GONE
-        view?.findViewById<Button>(R.id.takePhotoButton)?.visibility = View.VISIBLE
-        view?.findViewById<Button>(R.id.previewBallDetectorButton)?.visibility = View.VISIBLE
+        view?.findViewById<MaterialButton>(R.id.trackBallButton)?.visibility = View.GONE
+        view?.findViewById<MaterialButton>(R.id.takePhotoButton)?.visibility = View.VISIBLE
+        view?.findViewById<MaterialButton>(R.id.previewBallDetectorButton)?.visibility =
+            View.VISIBLE
     }
 
     fun hideFindBallButtons() {
-        view?.findViewById<Button>(R.id.trackBallButton)?.visibility = View.VISIBLE
-        view?.findViewById<Button>(R.id.takePhotoButton)?.visibility = View.GONE
-        view?.findViewById<Button>(R.id.previewBallDetectorButton)?.visibility = View.GONE
+        view?.findViewById<MaterialButton>(R.id.trackBallButton)?.visibility = View.VISIBLE
+        view?.findViewById<MaterialButton>(R.id.takePhotoButton)?.visibility = View.GONE
+        view?.findViewById<MaterialButton>(R.id.previewBallDetectorButton)?.visibility = View.GONE
     }
 
     private fun takePhoto() {
@@ -225,12 +242,8 @@ class GameFragment : Fragment() {
 
         // Запускаем корутину
         lifecycleScope.launch {
-            // имитация задержки
             delay(1500)
-
-            // здесь твой аплоад
             PhotoUploader.uploadPhoto(requireContext(), bitmap)
-
             // восстанавливаем UI
             progressBar.visibility = View.GONE
             takePhotoButton.isEnabled = true
@@ -263,6 +276,7 @@ class GameFragment : Fragment() {
                 matrix.postScale(scale, scale, centerX, centerY)
                 matrix.postRotate(90f * (rotation - 2), centerX, centerY)
             }
+
             android.view.Surface.ROTATION_180 -> {
                 matrix.postRotate(180f, centerX, centerY)
             }
@@ -279,7 +293,7 @@ class GameFragment : Fragment() {
         if (this::cameraDevice.isInitialized) {
             cameraDevice.close()
         }
-        ballDetector.stopHsvFetching() // ← остановка обновления HSV
+        ballDetector.stopHsvFetching() // остановка обновления HSV
     }
 
     override fun onResume() {

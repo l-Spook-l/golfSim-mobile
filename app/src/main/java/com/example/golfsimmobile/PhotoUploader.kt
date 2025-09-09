@@ -10,20 +10,46 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 
+/**
+ * Handles uploading photos to the server.
+ *
+ * Responsibilities:
+ * - Compresses [Bitmap] into JPEG format.
+ * - Wraps the image into a multipart HTTP request.
+ * - Sends the request asynchronously using OkHttp.
+ * - Provides upload result feedback via [Toast].
+ *
+ * Example usage:
+ * ```kotlin
+ * val bitmap: Bitmap = textureView.bitmap!!
+ * PhotoUploader.uploadPhoto(context, bitmap)
+ * ```
+ */
 object PhotoUploader {
-
+    /** Server endpoint for image uploads. */
     private const val SERVER_URL = "http://192.168.50.107:7878/upload/"
 
+    /**
+     * Uploads a [bitmap] image to the server asynchronously.
+     *
+     * - Compresses the bitmap to JPEG (90% quality).
+     * - Sends a multipart/form-data POST request.
+     * - Shows a [Toast] message upon success or failure.
+     *
+     * @param context application context used for showing [Toast]
+     * @param bitmap the image to upload
+     */
     fun uploadPhoto(context: Context, bitmap: Bitmap) {
         val client = OkHttpClient()
-
         val byteArrayOutputStream = ByteArrayOutputStream()
-        // Сжимает Bitmap в JPEG с качеством 90% и записывает в ByteArrayOutputStream.
+
+        // Compresses Bitmap to JPEG with 90% quality and writes to ByteArrayOutputStream.
         bitmap.compress(Bitmap.CompressFormat.JPEG, 90, byteArrayOutputStream)
-        // Преобразует байты изображения в RequestBody с MIME-типом image/jpeg.
+
+        // Converts image bytes into a RequestBody with MIME type image/jpeg.
         val imageBytes = byteArrayOutputStream.toByteArray()
 
-        //Формирует multipart-запрос, содержащий изображение под именем photo.jpg и ключом "file".
+        // Creates a multipart request containing the image named photo.jpg with the key "file".
         val requestBody = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart(
@@ -32,16 +58,18 @@ object PhotoUploader {
                 imageBytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
             )
             .build()
-        // Собирает сам HTTP POST-запрос на сервер
+
+        // Builds the actual HTTP POST request to the server
         val request = Request.Builder()
             .url(SERVER_URL)
             .post(requestBody)
             .build()
-        // Выполняет сетевой запрос в фоновом потоке, не блокируя основной UI.
+
+        // Execute request on IO thread
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = client.newCall(request).execute()
-                // Возвращает результат на главный поток для показа Toast.
+                // Returns the result to the main thread to show a Toast.
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful) {
                         Toast.makeText(context, "Image uploaded successfully", Toast.LENGTH_SHORT).show()
@@ -51,7 +79,7 @@ object PhotoUploader {
                 }
             } catch (e: IOException) {
                 e.printStackTrace()
-                // Возвращает результат на главный поток для показа Toast.
+                // Returns the result to the main thread to display a Toast.
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Upload error: ${e.message}", Toast.LENGTH_SHORT).show()
                 }

@@ -30,12 +30,32 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * Handles video recording and uploading.
+ *
+ * Responsibilities:
+ * - Configures and controls [MediaRecorder].
+ * - Records video with camera preview.
+ * - Plays sound cues at recording start/stop.
+ * - Uploads recorded video to a server.
+ *
+ * Usage flow:
+ * 1. Call [startRecording] to begin capturing video.
+ * 2. Call [stopRecording] to finish recording.
+ * 3. Optionally call [uploadVideo] to send the file to the server.
+ *
+ * @param context application [Context] for UI and media operations
+ * @param textureView surface for preview display
+ * @param cameraDevice active [CameraDevice] for capture
+ * @param handler background [Handler] for camera operations
+ */
 class VideoRecorder(
     private val context: Context,
     private val textureView: TextureView,
     private val cameraDevice: CameraDevice,
     private val handler: Handler
 ) {
+    /** Android system recorder for audio/video. */
     lateinit var mediaRecorder: MediaRecorder
     private lateinit var captureRequestBuilder: CaptureRequest.Builder
     private lateinit var captureSession: CameraCaptureSession
@@ -44,9 +64,16 @@ class VideoRecorder(
     private var sensorOrientation: Int = 0
 
     companion object {
+        /** Server endpoint for uploading recorded videos. */
         private const val SERVER_URL = "http://192.168.50.107:7878/upload/"
     }
 
+    /**
+     * Prepares [MediaRecorder] for recording:
+     * - Configures sources and encoders.
+     * - Sets file output path with timestamp.
+     * - Applies orientation based on device rotation.
+     */
     private fun setupMediaRecorder() {
         try {
             mediaRecorder = MediaRecorder()
@@ -54,7 +81,7 @@ class VideoRecorder(
             mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
             mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
 
-            // Добавляем ориентацию
+            // Add orientation
             val windowManager = (context as Activity).windowManager
             val rotation = windowManager.defaultDisplay.rotation
 
@@ -86,6 +113,13 @@ class VideoRecorder(
         }
     }
 
+    /**
+     * Starts video recording:
+     * - Closes previous capture session if exists.
+     * - Sets up [MediaRecorder] and camera session.
+     * - Plays start sound cue.
+     * - Begins recording to file.
+     */
     fun startRecording() {
         try {
             if (::captureSession.isInitialized) {
@@ -125,14 +159,21 @@ class VideoRecorder(
         }
     }
 
-    // после этого метода надо вызывать - startPreview()
+    /**
+     * Stops recording:
+     * - Stops and releases [MediaRecorder].
+     * - Plays stop sound cue.
+     * - Marks recording as inactive.
+     *
+     * Must call [startRecording] again before new recording.
+     */
     fun stopRecording() {
         try {
             playSound(context, R.raw.ding_sfx)
 
             mediaRecorder.stop()
             mediaRecorder.reset()
-            mediaRecorder.release()  // Добавь эту строку!
+            mediaRecorder.release()
 
             isRecording = false
         } catch (e: CameraAccessException) {
@@ -144,6 +185,13 @@ class VideoRecorder(
         }
     }
 
+    /**
+     * Uploads the last recorded video file to the server.
+     *
+     * - Uses OkHttp for HTTP POST request.
+     * - Wraps video file in multipart/form-data request.
+     * - Displays upload result as a toast.
+     */
     fun uploadVideo() {
         val client = OkHttpClient()
         val file = File(videoFilePath)
@@ -162,7 +210,6 @@ class VideoRecorder(
             .post(requestBody)
             .build()
 
-        // Запускаем корутину
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = client.newCall(request).execute()
@@ -182,11 +229,22 @@ class VideoRecorder(
         }
     }
 
+    /**
+     * Sets the orientation of the camera sensor.
+     *
+     * @param orientation sensor orientation in degrees
+     */
     fun setSensorOrientation(orientation: Int) {
         sensorOrientation = orientation
     }
 
-    fun playSound(context: Context, soundResourceId: Int) {
+    /**
+     * Plays a short sound from resources.
+     *
+     * @param context application [Context]
+     * @param soundResourceId raw resource ID of the sound file
+     */
+    private fun playSound(context: Context, soundResourceId: Int) {
         val mediaPlayer = MediaPlayer.create(context, soundResourceId)
         mediaPlayer.setOnCompletionListener {
             it.release()

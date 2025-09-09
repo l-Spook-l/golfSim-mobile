@@ -17,7 +17,20 @@ import android.view.TextureView
 import androidx.core.app.ActivityCompat
 import com.example.golfsimmobile.utils.showToast
 
-
+/**
+ * Controls the camera for ball tracking.
+ *
+ * Handles:
+ * - Opening the camera and checking permissions.
+ * - Initializing the BallDetector.
+ * - Starting the preview on a TextureView.
+ *
+ * @property context application context
+ * @property textureView surface for displaying camera preview
+ * @property previewSize size of the camera preview
+ * @property handler background thread handler
+ * @property ballDetector detector that processes camera frames
+ */
 class CameraController(
     private val context: Context,
     private val textureView: TextureView,
@@ -29,10 +42,16 @@ class CameraController(
     private lateinit var captureSession: CameraCaptureSession
     private lateinit var captureRequestBuilder: CaptureRequest.Builder
     private val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-
     private var cameraId: String = ""
     private var sensorOrientation: Int = 0
 
+    /**
+     * Opens the camera and initializes it.
+     *
+     * - Selects the first available camera.
+     * - Checks if the app has camera permissions.
+     * - Starts the [BallDetector] once the camera is opened.
+     */
     fun openCamera() {
         if (!textureView.isAvailable) return
 
@@ -44,7 +63,7 @@ class CameraController(
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED
             ) {
-                showToast(context,"Нет разрешения на камеру")
+                showToast(context, "Camera permission is not granted")
                 return
             }
 
@@ -61,16 +80,20 @@ class CameraController(
 
                 override fun onError(device: CameraDevice, error: Int) {
                     device.close()
-                    showToast(context,"Ошибка камеры: $error")
+                    showToast(context, "Camera error")
                 }
             }, handler)
 
         } catch (e: Exception) {
             e.printStackTrace()
-            showToast(context,"Ошибка открытия камеры: ${e.message}")
+            showToast(context, "Error opening camera")
         }
     }
-
+    /**
+     * Starts the camera preview on the [textureView].
+     *
+     * Configures a repeating capture request for continuous preview frames.
+     */
     fun startPreview() {
         if (!::cameraDevice.isInitialized || !textureView.isAvailable) return
 
@@ -97,14 +120,14 @@ class CameraController(
                     }
 
                     override fun onConfigureFailed(session: CameraCaptureSession) {
-                        showToast(context,"Не удалось настроить превью")
+                        showToast(context, "Failed to set up preview")
                     }
                 },
                 handler
             )
         } catch (e: CameraAccessException) {
             e.printStackTrace()
-            showToast(context,"Ошибка запуска превью: ${e.message}")
+            showToast(context, "Error starting preview")
         }
     }
 }

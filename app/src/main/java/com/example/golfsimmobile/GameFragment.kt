@@ -32,6 +32,33 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.opencv.android.OpenCVLoader
 
+/**
+ * Fragment responsible for game mode and ball tracking.
+ *
+ * Responsibilities:
+ * - Initializes camera, [CameraController] and [BallDetector].
+ * - Requests and manages camera/microphone/storage permissions.
+ * - Provides UI for taking photos, ball tracking, and preview mode.
+ * - Handles OpenCV initialization and frame processing.
+ * - Manages overlay updates and recording state.
+ *
+ * @property cameraController manages camera lifecycle and preview
+ * @property ballDetector detects ball in frames and handles recording
+ * @property requestPermissionLauncher launcher for runtime permissions
+ * @property textureView displays camera preview
+ * @property imageView shows processed frames with overlays
+ * @property handler background handler for camera operations
+ * @property cameraManager system service for accessing camera
+ * @property cameraDevice active camera instance
+ * @property takePhotoButton button for taking a photo
+ * @property trackBallButton button for starting/stopping ball tracking
+ * @property previewBallDetectorButton button for previewing detector output
+ * @property progressBar shows upload progress after taking a photo
+ * @property previewSize resolution of the preview stream
+ * @property isTracking indicates whether ball tracking is active
+ * @property isPreviewBallDetector indicates whether preview mode is active
+ * @property isUploading indicates whether a photo is being uploaded
+ */
 class GameFragment : Fragment() {
     private lateinit var cameraController: CameraController
     private lateinit var ballDetector: BallDetector
@@ -67,7 +94,7 @@ class GameFragment : Fragment() {
         handler = Handler(thread.looper)
 
         ballDetector = BallDetector(requireContext(), textureView, imageView) {
-            cameraController.openCamera() // вернём камеру в режим превью
+            cameraController.openCamera() // Switch camera back to preview mode
         }
         ballDetector.startHsvFetching()
 
@@ -90,15 +117,15 @@ class GameFragment : Fragment() {
             Log.d("OpenCV", "OpenCV initialization succeeded")
         }
 
-        // Инициализация обработчика разрешений
+        // Initialization of the permission handler
         requestPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
             if (permissions.values.all { it }) {
-                showToast(requireContext(), "Разрешения предоставлены")
+                showToast(requireContext(), "Permissions granted")
                 cameraController.openCamera()
             } else {
-                showToast(requireContext(), "Не все разрешения предоставлены")
+                showToast(requireContext(), "Not all permissions granted")
             }
         }
 
@@ -125,6 +152,12 @@ class GameFragment : Fragment() {
         checkAndRequestPermissions()
     }
 
+    /**
+     * Listener for [TextureView] surface events.
+     *
+     * Handles preview configuration, frame updates and delegates frame processing
+     * to the [BallDetector].
+     */
     private val surfaceTextureListener = object : TextureView.SurfaceTextureListener {
         override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
             configureTransform(width, height)
@@ -154,6 +187,15 @@ class GameFragment : Fragment() {
     private val mainActivity: MainActivity
         get() = requireActivity() as MainActivity
 
+    /**
+     * Toggles ball detection or preview mode.
+     *
+     * Updates button state, UI, and starts/stops [BallDetector] accordingly.
+     *
+     * @param isEnabled whether the detection/preview is active
+     * @param button reference to the toggled button
+     * @param mode mode type ("game" or "preview")
+     */
     private fun toggleBallDetection(
         isEnabled: Boolean,
         button: MaterialButton,
@@ -165,13 +207,13 @@ class GameFragment : Fragment() {
                 "preview" -> {
                     button.text = "Stop preview"
                     takePhotoButton.isEnabled = false
-                    mainActivity.setTabButtonsEnabled(false)  // Отключаем кнопки вкладок
+                    mainActivity.setTabButtonsEnabled(false)  // Disable tab buttons
                 }
             }
             button.backgroundTintList = ColorStateList.valueOf(Color.RED)
             button.strokeColor = ColorStateList.valueOf(Color.TRANSPARENT)
 
-            Toast.makeText(context, "Начинаем отслеживание мяча", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "// Start tracking the ball", Toast.LENGTH_SHORT).show()
             handler.post {
                 ballDetector.processFrame(mode)
             }
@@ -181,13 +223,13 @@ class GameFragment : Fragment() {
                 "preview" -> {
                     button.text = "Preview ball"
                     takePhotoButton.isEnabled = true
-                    mainActivity.setTabButtonsEnabled(true)  // Включаем кнопки вкладок
+                    mainActivity.setTabButtonsEnabled(true)  // Enable the tab buttons
                 }
             }
             button.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#99000000"))
             button.strokeColor = ColorStateList.valueOf(Color.parseColor("#80FFFFFF"))
 
-            Toast.makeText(context, "Отслеживание остановлено", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Tracking has been stopped", Toast.LENGTH_SHORT).show()
             handler.removeCallbacksAndMessages(null)
             Handler(Looper.getMainLooper()).postDelayed({
                 cameraController.openCamera()
@@ -197,6 +239,14 @@ class GameFragment : Fragment() {
         }
     }
 
+    /**
+     * Checks if required permissions are granted and requests them if needed.
+     *
+     * Permissions:
+     * - CAMERA
+     * - RECORD_AUDIO
+     * - WRITE_EXTERNAL_STORAGE
+     */
     private fun checkAndRequestPermissions() {
         val permissions = arrayOf(
             Manifest.permission.CAMERA,
@@ -220,6 +270,9 @@ class GameFragment : Fragment() {
         }
     }
 
+    /**
+     * Shows buttons relevant for "Find Ball" mode.
+     */
     fun showFindBallButtons() {
         view?.findViewById<MaterialButton>(R.id.trackBallButton)?.visibility = View.GONE
         view?.findViewById<MaterialButton>(R.id.takePhotoButton)?.visibility = View.VISIBLE
@@ -227,12 +280,20 @@ class GameFragment : Fragment() {
             View.VISIBLE
     }
 
+    /**
+     * Hides "Find Ball" mode buttons and restores game UI.
+     */
     fun hideFindBallButtons() {
         view?.findViewById<MaterialButton>(R.id.trackBallButton)?.visibility = View.VISIBLE
         view?.findViewById<MaterialButton>(R.id.takePhotoButton)?.visibility = View.GONE
         view?.findViewById<MaterialButton>(R.id.previewBallDetectorButton)?.visibility = View.GONE
     }
 
+    /**
+     * Captures the current frame as a photo and uploads it.
+     *
+     * Displays progress bar during upload and restores UI after completion.
+     */
     private fun takePhoto() {
         val bitmap = textureView.bitmap ?: return
 
@@ -240,17 +301,25 @@ class GameFragment : Fragment() {
         takePhotoButton.isEnabled = false
         progressBar.visibility = View.VISIBLE
 
-        // Запускаем корутину
+        // Start coroutine
         lifecycleScope.launch {
             delay(1500)
             PhotoUploader.uploadPhoto(requireContext(), bitmap)
-            // восстанавливаем UI
+            // Restore UI
             progressBar.visibility = View.GONE
             takePhotoButton.isEnabled = true
             isUploading = false
         }
     }
 
+    /**
+     * Configures preview transformation for the [TextureView] and [ImageView].
+     *
+     * Applies scaling, rotation, and centering to properly display the camera stream.
+     *
+     * @param viewWidth width of the TextureView
+     * @param viewHeight height of the TextureView
+     */
     private fun configureTransform(viewWidth: Int, viewHeight: Int) {
         val rotation = requireActivity().windowManager.defaultDisplay.rotation
         val matrix = android.graphics.Matrix()
@@ -270,6 +339,7 @@ class GameFragment : Fragment() {
         )
 
         when (rotation) {
+            android.view.Surface.ROTATION_0 -> {}
             android.view.Surface.ROTATION_90,
             android.view.Surface.ROTATION_270 -> {
                 matrix.setRectToRect(viewRect, bufferRect, android.graphics.Matrix.ScaleToFit.FILL)
@@ -293,7 +363,7 @@ class GameFragment : Fragment() {
         if (this::cameraDevice.isInitialized) {
             cameraDevice.close()
         }
-        ballDetector.stopHsvFetching() // остановка обновления HSV
+        ballDetector.stopHsvFetching() // Stop HSV updates
     }
 
     override fun onResume() {

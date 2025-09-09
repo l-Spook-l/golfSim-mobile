@@ -8,6 +8,32 @@ import org.json.JSONObject
 import java.io.IOException
 
 
+/**
+ * Periodically fetches HSV values from a remote source via HTTP.
+ *
+ * Responsibilities:
+ * - Sends GET requests to the provided URL.
+ * - Parses JSON responses into HSV thresholds.
+ * - Invokes [onUpdate] callback with updated HSV values.
+ * - Runs periodically on the main thread using [Handler].
+ *
+ * Expected JSON format:
+ * ```json
+ * {
+ *   "hsv_vals": {
+ *     "hue_min": 0,
+ *     "hue_max": 255,
+ *     "saturation_min": 0,
+ *     "saturation_max": 255,
+ *     "value_min": 0,
+ *     "value_max": 255
+ *   }
+ * }
+ * ```
+ *
+ * @property url endpoint that returns HSV configuration
+ * @property onUpdate callback triggered when new HSV values are received
+ */
 class HSVFetcher(
     private val url: String,
     private val onUpdate: (Map<String, Int>) -> Unit
@@ -25,6 +51,11 @@ class HSVFetcher(
         }
     }
 
+    /**
+     * Starts periodic fetching of HSV values.
+     *
+     * Requests are sent every 5 seconds until [stopFetching] is called.
+     */
     fun startFetching() {
         if (!isRunning) {
             isRunning = true
@@ -32,18 +63,26 @@ class HSVFetcher(
         }
     }
 
+    /**
+     * Stops periodic fetching of HSV values.
+     */
     fun stopFetching() {
         isRunning = false
         handler.removeCallbacks(fetchRunnable)
     }
 
+    /**
+     * Sends an HTTP request to fetch HSV values and parses the response.
+     *
+     * Invokes [onUpdate] if parsing succeeds.
+     */
     private fun fetchHSV() {
         val request = Request.Builder().url(url).build()
         Log.d("HSVFetcher", "Sending request to URL: $url")
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                Log.e("HSVFetcher", "Ошибка запроса HSV: ${e.message}")
+                Log.e("HSVFetcher", "HSV request error: ${e.message}")
                 Log.e("HSVFetcher", "Request failed with exception: ${e.localizedMessage}")
             }
 
@@ -72,7 +111,7 @@ class HSVFetcher(
                         Log.d("HSVFetcher", "HSV values parsed: $hsvMap")
                         onUpdate(hsvMap)
                     } catch (e: Exception) {
-                        Log.e("HSVFetcher", "Ошибка парсинга HSV: ${e.message}")
+                        Log.e("HSVFetcher", "HSV parsing error: ${e.message}")
                         Log.e("HSVFetcher", "Error parsing JSON: ${e.localizedMessage}")
                     }
                 }

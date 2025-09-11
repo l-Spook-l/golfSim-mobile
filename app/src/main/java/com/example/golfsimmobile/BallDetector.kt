@@ -46,6 +46,7 @@ class BallDetector(
     private var lowerYellow = Scalar(0.0, 0.0, 0.0)  // Lower HSV bound for yellow
     private var upperYellow = Scalar(255.0, 255.0, 255.0)  // Upper bound of HSV range for yellow
     private var sensorOrientation: Int = 0
+    private var frameCounter: Int = 0
 
     /**
      * Initializes the video recorder with camera parameters.
@@ -137,6 +138,10 @@ class BallDetector(
      * @param mode current mode of the app (e.g., `"game"`)
      */
     fun processFrame(mode: String) {
+        frameCounter++
+
+        if (frameCounter % 5 != 0) return
+
         if (!::videoRecorder.isInitialized) {
             Log.e("BallDetector", "VideoRecorder not initialized")
             return

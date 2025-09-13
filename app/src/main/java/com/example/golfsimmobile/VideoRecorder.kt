@@ -96,7 +96,8 @@ class VideoRecorder(
 
             val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
             val videoFileName = "VIDEO_$timeStamp.mp4"
-            val videoFile = File(context.getExternalFilesDir(Environment.DIRECTORY_MOVIES), videoFileName)
+            val videoFile = File(context.cacheDir, videoFileName) // save video to cache
+
             videoFilePath = videoFile.absolutePath
 
             mediaRecorder.setOutputFile(videoFilePath)
@@ -225,6 +226,8 @@ class VideoRecorder(
                 withContext(Dispatchers.Main) {
                     showToast(context,"Upload failed: ${e.message}")
                 }
+            } finally {
+                file.delete()  // always delete temporary file
             }
         }
     }

@@ -46,32 +46,19 @@ object IpDialog {
                     progressBar.visibility = View.VISIBLE
                     button.isEnabled = false
 
-                    val client = OkHttpClient()
-                    val request = Request.Builder()
-                        .url("http://$ip:7878/ping")
-                        .build()
-
                     CoroutineScope(Dispatchers.IO).launch {
-                        try {
-                            val response = client.newCall(request).execute()
-                            withContext(Dispatchers.Main) {
-                                progressBar.visibility = View.GONE
-                                button.isEnabled = true
+                        val isAlive = IpStorage.checkIpStatus(ip)
+                        withContext(Dispatchers.Main) {
+                            progressBar.visibility = View.GONE
+                            button.isEnabled = true
 
-                                if (response.isSuccessful) {
-                                    IpStorage.saveIp(context, ip)
-                                    Toast.makeText(context, "Connection successful", Toast.LENGTH_SHORT).show()
-                                    dialog.dismiss()
-                                    onSuccess()
-                                } else {
-                                    Toast.makeText(context, "Error: ${response.message}", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        } catch (e: IOException) {
-                            withContext(Dispatchers.Main) {
-                                progressBar.visibility = View.GONE
-                                button.isEnabled = true
-                                Toast.makeText(context, "No connection: ${e.message}", Toast.LENGTH_SHORT).show()
+                            if (isAlive) {
+                                IpStorage.saveIp(context, ip)
+                                Toast.makeText(context, "Connection successful", Toast.LENGTH_SHORT).show()
+                                dialog.dismiss()
+                                onSuccess()
+                            } else {
+                                Toast.makeText(context, "Server not available at $ip", Toast.LENGTH_SHORT).show()
                             }
                         }
                     }

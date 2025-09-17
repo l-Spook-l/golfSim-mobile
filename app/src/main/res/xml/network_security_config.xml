@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">192.168.50.107</domain>
-    </domain-config>
+    <!--
+        Allow HTTP (cleartext) traffic for dynamic local IPs entered by user.
+        This is required to connect to a local PC server within the same LAN.
+        Not used for public internet communication.
+    -->
+    <base-config cleartextTrafficPermitted="true" />
 </network-security-config>

@@ -2,18 +2,25 @@ package com.example.golfsimmobile
 
 import android.app.AlertDialog
 import android.content.Context
-import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.Toast
 import kotlinx.coroutines.*
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import java.io.IOException
 
 object IpDialog {
+    /**
+     * Displays a non-cancelable dialog prompting the user to enter a server IP address.
+     *
+     * Performs the following steps:
+     * - Shows an EditText for manual IP input
+     * - On confirmation, sends a network request to verify server availability
+     * - If successful, saves the IP using [IpStorage.saveIp] and triggers [onSuccess]
+     *
+     * @param context host [Context], usually an Activity
+     * @param onSuccess callback invoked when the IP is valid and saved
+     */
     fun show(context: Context, onSuccess: () -> Unit) {
         val editText = EditText(context).apply {
             hint = "Enter IP (e.g., 192.168.50.107)"
@@ -54,11 +61,16 @@ object IpDialog {
 
                             if (isAlive) {
                                 IpStorage.saveIp(context, ip)
-                                Toast.makeText(context, "Connection successful", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Connection successful", Toast.LENGTH_SHORT)
+                                    .show()
                                 dialog.dismiss()
                                 onSuccess()
                             } else {
-                                Toast.makeText(context, "Server not available at $ip", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Server not available at $ip",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
                     }

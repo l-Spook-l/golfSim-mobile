@@ -26,9 +26,6 @@ import java.io.IOException
  * ```
  */
 object PhotoUploader {
-    /** Server endpoint for image uploads. */
-    private const val SERVER_URL = "http://192.168.50.107:7878/upload/"
-
     /**
      * Uploads a [bitmap] image to the server asynchronously.
      *
@@ -40,6 +37,12 @@ object PhotoUploader {
      * @param bitmap the image to upload
      */
     fun uploadPhoto(context: Context, bitmap: Bitmap) {
+        val ip = IpStorage.getIp() ?: run {
+            Toast.makeText(context, "IP is not configured", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val serverUrl = "http://$ip:7878/upload/"
         val client = OkHttpClient()
         val byteArrayOutputStream = ByteArrayOutputStream()
 
@@ -61,7 +64,7 @@ object PhotoUploader {
 
         // Builds the actual HTTP POST request to the server
         val request = Request.Builder()
-            .url(SERVER_URL)
+            .url(serverUrl)
             .post(requestBody)
             .build()
 

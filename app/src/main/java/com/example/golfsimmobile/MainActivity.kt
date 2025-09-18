@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 /**
  * Main activity of the application.
@@ -51,6 +53,27 @@ class MainActivity : AppCompatActivity() {
         }
         findBallTabButton.setOnClickListener {
             gameFragment.showFindBallButtons()
+        }
+
+        // Initialize IpStorage
+        IpStorage.init(this)
+
+        // Subscribe to IP changes
+        lifecycleScope.launch {
+            IpStorage.ipFlow.collect { ip ->
+                if (ip == null) {
+                    // If there's no IP → show the dialog
+                    IpDialog.show(this@MainActivity) {}
+                } else {
+                    // check the server is reachable
+                    lifecycleScope.launch {
+                        val ok = IpStorage.checkIpStatus(ip)
+                        if (!ok) {
+                            IpDialog.show(this@MainActivity) { }
+                        }
+                    }
+                }
+            }
         }
     }
 

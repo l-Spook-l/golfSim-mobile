@@ -110,7 +110,7 @@ class GameFragment : Fragment() {
         trackBallButton = view.findViewById(R.id.trackBallButton)
         previewBallDetectorButton = view.findViewById(R.id.previewBallDetectorButton)
 
-        // Инициализация OpenCV
+        // OpenCV initialization
         if (!OpenCVLoader.initDebug()) {
             Log.e("OpenCV", "OpenCV initialization failed")
         } else {
@@ -169,10 +169,10 @@ class GameFragment : Fragment() {
         }
 
         override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-            false  // у меня false
+            false
 
         override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
-            // OpenCV логика обработки кадра
+            // Logic for processing frames using OpenCV
             if (isTracking) {
                 ballDetector.processFrame("game")
             } else if (isPreviewBallDetector) {
@@ -213,7 +213,7 @@ class GameFragment : Fragment() {
             button.backgroundTintList = ColorStateList.valueOf(Color.RED)
             button.strokeColor = ColorStateList.valueOf(Color.TRANSPARENT)
 
-            Toast.makeText(context, "// Start tracking the ball", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Start tracking the ball", Toast.LENGTH_SHORT).show()
             handler.post {
                 ballDetector.processFrame(mode)
             }

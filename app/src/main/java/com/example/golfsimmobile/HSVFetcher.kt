@@ -31,11 +31,9 @@ import java.io.IOException
  * }
  * ```
  *
- * @property url endpoint that returns HSV configuration
  * @property onUpdate callback triggered when new HSV values are received
  */
 class HSVFetcher(
-    private val url: String,
     private val onUpdate: (Map<String, Int>) -> Unit
 ) {
     private val client = OkHttpClient()
@@ -77,8 +75,17 @@ class HSVFetcher(
      * Invokes [onUpdate] if parsing succeeds.
      */
     private fun fetchHSV() {
-        val request = Request.Builder().url(url).build()
-        Log.d("HSVFetcher", "Sending request to URL: $url")
+        val ip = IpStorage.getIp()
+        if (ip.isNullOrEmpty()) {
+            Log.e("HSVFetcher", "IP is not set")
+            return
+        }
+
+        val request = Request.Builder()
+            .url("http://$ip:7878/get-hsv") // dynamically generate the URL
+            .build()
+
+        Log.d("HSVFetcher", "Sending request to URL: $ip")
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {

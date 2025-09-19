@@ -112,7 +112,7 @@ class BallDetector(
      * Starts periodic fetching of HSV values from a remote source.
      */
     fun startHsvFetching() {
-        hsvFetcher = HSVFetcher("http://192.168.50.107:7878/get-hsv") { hsvMap ->
+        hsvFetcher = HSVFetcher { hsvMap ->
             updateHsvValues(hsvMap)
         }
         hsvFetcher?.startFetching()

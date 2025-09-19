@@ -9,7 +9,6 @@ import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.media.MediaPlayer
 import android.media.MediaRecorder
-import android.os.Environment
 import android.os.Handler
 import android.util.Range
 import android.view.Surface
@@ -63,10 +62,15 @@ class VideoRecorder(
     private lateinit var videoFilePath: String
     private var sensorOrientation: Int = 0
 
-    companion object {
-        /** Server endpoint for uploading recorded videos. */
-        private const val SERVER_URL = "http://192.168.50.107:7878/upload/"
-    }
+    /**
+     * Get the current server address on the fly.
+     * If the IP is not set → return null.
+     */
+    private val serverUrl: String?
+        get() {
+            val ip = IpStorage.getIp() ?: return null
+            return "http://$ip:7878/upload/"
+        }
 
     /**
      * Prepares [MediaRecorder] for recording:
@@ -194,6 +198,11 @@ class VideoRecorder(
      * - Displays upload result as a toast.
      */
     fun uploadVideo() {
+        val url = serverUrl ?: run {
+            showToast(context, "The server's IP address is not set")
+            return
+        }
+
         val client = OkHttpClient()
         val file = File(videoFilePath)
 
@@ -207,7 +216,7 @@ class VideoRecorder(
             .build()
 
         val request = Request.Builder()
-            .url(SERVER_URL)
+            .url(url)
             .post(requestBody)
             .build()
 

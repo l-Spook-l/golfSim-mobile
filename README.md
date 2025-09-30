@@ -1,7 +1,7 @@
 # 📱 GolfSim Mobile
 
-![Kotlin](https://img.shields.io/badge/Kotlin-1.9-blueviolet?logo=kotlin)  
-![OpenCV](https://img.shields.io/badge/OpenCV-Computer_Vision-5C3EE8?logo=opencv)  
+![Kotlin](https://img.shields.io/badge/Kotlin-1.9-blueviolet?logo=kotlin)
+![OpenCV](https://img.shields.io/badge/OpenCV-Computer_Vision-5C3EE8?logo=opencv)
 ![Android](https://img.shields.io/badge/Android-App-green?logo=android)
 
 ## 📖 About the Project
@@ -28,11 +28,11 @@ Main features:
 ---
 
 ## 🖼️ Screenshots
-### Main Screen:
-![Main Screen](docs/images/main_screen.png)
-
-### Ball Detection:
-![Ball Detection](docs/images/ball_preview.png)
+### Main Screen and Ball Detection:
+<p align="center">
+  <img src="docs/images/ball_preview.png" alt="Ball Detection" width="45%"/>
+  <img src="docs/images/main_screen.png" alt="Main Screen" width="45%"/>
+</p>
 
 ---
 
@@ -40,6 +40,7 @@ Main features:
 1. Clone the repository:
    ```bash
    git clone https://github.com/l-Spook-l/golfSim-mobile.git
+   ```
 2. Open the project in **Android Studio**.
 
 3. Build the project to download all dependencies.
